@@ -1,5 +1,6 @@
 <?php
-// error_reporting(E_ALL); 
+error_reporting(E_ALL); 
+
 
 require('./connection.php'); 
 
@@ -44,6 +45,14 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
     .formitem{
         margin:5px;
     }
+    button{
+        margin:5px; 
+    }
+    form{
+        margin:0;
+        padding:0;
+    }
+
 </style>
 
 <div id="container">
@@ -51,7 +60,54 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
 
 
 
-    if($page === "er") echo "erreur ds le formulaire. (refresh 2s)"; header('refresh:2;url=index.php');  
+    if($page === "er") echo "erreur ds le formulaire. (refresh 2s)"; /*header('refresh:2;url=index.php');  */
+
+    if($page === "change"){ // change [status [ do / to do ] / archive ] 
+        
+        $itemid = isset($_GET['id']) ? secure($_GET['id']) : 0;  
+
+        $item = $dbcon->query("SELECT * FROM todoitem WHERE item_id = '".$itemid."' "); 
+
+        if(mysqli_num_rows($item) === 1){
+            echo "item id: " .$itemid; 
+
+            switch(secure($_GET['what'])){
+                case 'archive':
+                    echo "archive;";
+                break;
+    
+                case 'status':
+                    $item = $item->fetch_assoc(); 
+                    //echo "status ". $item['item_title']; 
+                    $newStatus = $item['item_do'] ?  0 : 1 ; // if status == do, then status change to todo.  
+                    $query = $dbcon->query("UPDATE todoitem SET item_do = ".$newStatus." WHERE item_id = ". $itemid);
+                    if($query){
+                        header('location:index.php');
+                    }else{
+                        echo "Error update item..."; 
+                    }
+                break;
+    
+                default:
+                    header('location:index.php'); 
+                break;
+                    
+            }
+
+
+        }else{
+            die("item not found!");
+        }
+
+
+
+
+        if($itemid){
+
+        }
+
+    }
+
 
     if($page === "additem"){
         $title = secure($_POST['itemtitle']); 
@@ -79,7 +135,23 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
 
                 if(mysqli_num_rows($items_todo) > 0){
                     foreach($items_todo as $item){
-                        echo "<tr><td>".$item['item_id']."</td><td>".$item['item_title']."</td><td>". ($item['item_do'] == 0 ? 'to do' : 'do' ) ."</td><td> <button'>DONE </buton> <button>ARCHIVE</button> </td></tr>";
+                        echo "
+                        <tr>
+                            <td>".$item['item_id']."</td>
+                            <td>".$item['item_title']."</td>
+                            <td>". ($item['item_do'] == 0 ? 'to do' : 'do' ) ."</td>
+                            <td style='border:1px solid black; display:flex; justify-content:center; '> 
+
+                                <form method='POST' action='?page=change&what=status&id=".$item['item_id']."'>
+                                    <button title='DONE'>DONE</button>
+                                </form>
+
+                                <form method='POST' action='?page=change&what=archive&id=".$item['item_id']."'>
+                                    <button>ARCHIVE</button> 
+                                </form>
+
+                            </td>
+                        </tr>";
                     }
                 }
                 if(mysqli_num_rows($items_arch) > 0){
