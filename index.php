@@ -73,7 +73,19 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
 
             switch(secure($_GET['what'])){
                 case 'archive':
+                case 'restore':
                     echo "archive;";
+                    $item = $item->fetch_assoc(); 
+                    $newArchiveStatus = $item['item_archived'] ? 0 : 1; // if is archived then set value to 0, if not, set it 1.  
+
+                    $query = $dbcon->query("UPDATE todoitem SET item_archived = ".$newArchiveStatus." WHERE item_id = ". $itemid);
+
+                    if($query){
+                        // echo "okk!"; 
+                        header('location:index.php');
+                    }else{
+                        echo "Erreur archive item." . $dbcon->error; 
+                    }
                 break;
     
                 case 'status':
@@ -100,11 +112,6 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
         }
 
 
-
-
-        if($itemid){
-
-        }
 
     }
 
@@ -143,7 +150,7 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
                             <td style='border:1px solid black; display:flex; justify-content:center; '> 
 
                                 <form method='POST' action='?page=change&what=status&id=".$item['item_id']."'>
-                                    <button title='DONE'>DONE</button>
+                                    <button title='DONE'>". ($item['item_do'] == 0 ? 'DONE' : 'NOT DONE' ) ."</button>
                                 </form>
 
                                 <form method='POST' action='?page=change&what=archive&id=".$item['item_id']."'>
@@ -155,9 +162,19 @@ $page = isset($_GET['page']) ? secure($_GET['page']) : "";
                     }
                 }
                 if(mysqli_num_rows($items_arch) > 0){
-                    echo "<tr><th colspan='4'>Archived items:</th></tr> "; 
+                    echo "<tr><th colspan='4' style='background-color:#ccc; border-top:1px solid black;'>Archived items:</th></tr> "; 
                     while($row = mysqli_fetch_assoc($items_arch)){
-                        echo "<tr><td>".$row['item_id']."</td><td>".$row['item_title']."</td><td>".($item['item_do'] == 0 ? 'to do' : 'do' )."</td></tr>"; 
+                        echo "
+                            <tr>
+                                <td>".$row['item_id']."</td>
+                                <td>".$row['item_title']."</td>
+                                <td>".($row['item_do'] == 0 ? 'to do' : 'do' )."</td>
+                                <td>
+                                    <form method='POST' action='?page=change&what=restore&id=".$row['item_id']."'>
+                                        <button>RESTORE</button> 
+                                    </form>
+                                </td>
+                            </tr>"; 
                     }
                 }   
                 
